@@ -52,11 +52,16 @@ type Consistent struct {
 	count            int64
 	scratch          [64]byte
 	UseFnv           bool
+	Hasher           Hasher
 	sync.RWMutex
 }
 type Config struct {
 	NumberOfReplicas int
 	UseFnv           bool
+	Hasher           Hasher
+}
+type Hasher interface {
+	HashFunc(key string) uint32
 }
 
 // New creates a new Consistent object with a default setting of 20 replicas for each entry.
@@ -69,6 +74,7 @@ func New(conf Config) *Consistent {
 		c.NumberOfReplicas = 20
 	}
 	c.UseFnv = conf.UseFnv
+	c.Hasher = conf.Hasher
 	c.circle = make(map[uint32]string)
 	c.members = make(map[string]bool)
 	return c
@@ -246,6 +252,9 @@ func (c *Consistent) GetN(name string, n int) ([]string, error) {
 }
 
 func (c *Consistent) hashKey(key string) uint32 {
+	if c.Hasher != nil {
+		return c.Hasher.HashFunc(key)
+	}
 	if c.UseFnv {
 		return c.hashKeyFnv(key)
 	}
