@@ -54,13 +54,21 @@ type Consistent struct {
 	UseFnv           bool
 	sync.RWMutex
 }
+type Config struct {
+	NumberOfReplicas int
+	UseFnv           bool
+}
 
 // New creates a new Consistent object with a default setting of 20 replicas for each entry.
 //
 // To change the number of replicas, set NumberOfReplicas before adding entries.
-func New() *Consistent {
+func New(conf Config) *Consistent {
 	c := new(Consistent)
-	c.NumberOfReplicas = 20
+	c.NumberOfReplicas = conf.NumberOfReplicas
+	if c.NumberOfReplicas == 0 {
+		c.NumberOfReplicas = 20
+	}
+	c.UseFnv = conf.UseFnv
 	c.circle = make(map[uint32]string)
 	c.members = make(map[string]bool)
 	return c

@@ -24,8 +24,13 @@ func checkNum(num, expected int, t *testing.T) {
 	}
 }
 
+func newConfig() Config {
+	return Config{
+		NumberOfReplicas: 20,
+	}
+}
 func TestNew(t *testing.T) {
-	x := New()
+	x := New(newConfig())
 	if x == nil {
 		t.Errorf("expected obj")
 	}
@@ -33,7 +38,7 @@ func TestNew(t *testing.T) {
 }
 
 func TestAdd(t *testing.T) {
-	x := New()
+	x := New(newConfig())
 	x.Add("abcdefg")
 	checkNum(len(x.circle), 20, t)
 	checkNum(len(x.sortedHashes), 20, t)
@@ -49,7 +54,7 @@ func TestAdd(t *testing.T) {
 }
 
 func TestRemove(t *testing.T) {
-	x := New()
+	x := New(newConfig())
 	x.Add("abcdefg")
 	x.Remove("abcdefg")
 	checkNum(len(x.circle), 0, t)
@@ -57,14 +62,14 @@ func TestRemove(t *testing.T) {
 }
 
 func TestRemoveNonExisting(t *testing.T) {
-	x := New()
+	x := New(newConfig())
 	x.Add("abcdefg")
 	x.Remove("abcdefghijk")
 	checkNum(len(x.circle), 20, t)
 }
 
 func TestGetEmpty(t *testing.T) {
-	x := New()
+	x := New(newConfig())
 	_, err := x.Get("asdfsadfsadf")
 	if err == nil {
 		t.Errorf("expected error")
@@ -75,7 +80,7 @@ func TestGetEmpty(t *testing.T) {
 }
 
 func TestGetSingle(t *testing.T) {
-	x := New()
+	x := New(newConfig())
 	x.Add("abcdefg")
 	f := func(s string) bool {
 		y, err := x.Get(s)
@@ -103,7 +108,7 @@ var gmtests = []gtest{
 }
 
 func TestGetMultiple(t *testing.T) {
-	x := New()
+	x := New(newConfig())
 	x.Add("abcdefg")
 	x.Add("hijklmn")
 	x.Add("opqrstu")
@@ -119,7 +124,7 @@ func TestGetMultiple(t *testing.T) {
 }
 
 func TestGetMultipleQuick(t *testing.T) {
-	x := New()
+	x := New(newConfig())
 	x.Add("abcdefg")
 	x.Add("hijklmn")
 	x.Add("opqrstu")
@@ -150,7 +155,7 @@ var rtestsAfter = []gtest{
 }
 
 func TestGetMultipleRemove(t *testing.T) {
-	x := New()
+	x := New(newConfig())
 	x.Add("abcdefg")
 	x.Add("hijklmn")
 	x.Add("opqrstu")
@@ -176,7 +181,7 @@ func TestGetMultipleRemove(t *testing.T) {
 }
 
 func TestGetMultipleRemoveQuick(t *testing.T) {
-	x := New()
+	x := New(newConfig())
 	x.Add("abcdefg")
 	x.Add("hijklmn")
 	x.Add("opqrstu")
@@ -196,7 +201,7 @@ func TestGetMultipleRemoveQuick(t *testing.T) {
 }
 
 func TestGetTwo(t *testing.T) {
-	x := New()
+	x := New(newConfig())
 	x.Add("abcdefg")
 	x.Add("hijklmn")
 	x.Add("opqrstu")
@@ -216,7 +221,7 @@ func TestGetTwo(t *testing.T) {
 }
 
 func TestGetTwoQuick(t *testing.T) {
-	x := New()
+	x := New(newConfig())
 	x.Add("abcdefg")
 	x.Add("hijklmn")
 	x.Add("opqrstu")
@@ -247,7 +252,7 @@ func TestGetTwoQuick(t *testing.T) {
 }
 
 func TestGetTwoOnlyTwoQuick(t *testing.T) {
-	x := New()
+	x := New(newConfig())
 	x.Add("abcdefg")
 	x.Add("hijklmn")
 	f := func(s string) bool {
@@ -277,7 +282,7 @@ func TestGetTwoOnlyTwoQuick(t *testing.T) {
 }
 
 func TestGetTwoOnlyOneInCircle(t *testing.T) {
-	x := New()
+	x := New(newConfig())
 	x.Add("abcdefg")
 	a, b, err := x.GetTwo("99999999")
 	if err != nil {
@@ -295,7 +300,7 @@ func TestGetTwoOnlyOneInCircle(t *testing.T) {
 }
 
 func TestGetN(t *testing.T) {
-	x := New()
+	x := New(newConfig())
 	x.Add("abcdefg")
 	x.Add("hijklmn")
 	x.Add("opqrstu")
@@ -318,7 +323,7 @@ func TestGetN(t *testing.T) {
 }
 
 func TestGetNLess(t *testing.T) {
-	x := New()
+	x := New(newConfig())
 	x.Add("abcdefg")
 	x.Add("hijklmn")
 	x.Add("opqrstu")
@@ -338,7 +343,7 @@ func TestGetNLess(t *testing.T) {
 }
 
 func TestGetNMore(t *testing.T) {
-	x := New()
+	x := New(newConfig())
 	x.Add("abcdefg")
 	x.Add("hijklmn")
 	x.Add("opqrstu")
@@ -361,7 +366,7 @@ func TestGetNMore(t *testing.T) {
 }
 
 func TestGetNQuick(t *testing.T) {
-	x := New()
+	x := New(newConfig())
 	x.Add("abcdefg")
 	x.Add("hijklmn")
 	x.Add("opqrstu")
@@ -395,7 +400,7 @@ func TestGetNQuick(t *testing.T) {
 }
 
 func TestGetNLessQuick(t *testing.T) {
-	x := New()
+	x := New(newConfig())
 	x.Add("abcdefg")
 	x.Add("hijklmn")
 	x.Add("opqrstu")
@@ -429,7 +434,7 @@ func TestGetNLessQuick(t *testing.T) {
 }
 
 func TestGetNMoreQuick(t *testing.T) {
-	x := New()
+	x := New(newConfig())
 	x.Add("abcdefg")
 	x.Add("hijklmn")
 	x.Add("opqrstu")
@@ -463,7 +468,7 @@ func TestGetNMoreQuick(t *testing.T) {
 }
 
 func TestSet(t *testing.T) {
-	x := New()
+	x := New(newConfig())
 	x.Add("abc")
 	x.Add("def")
 	x.Add("ghi")
@@ -540,7 +545,7 @@ func mallocNum(f func()) uint64 {
 }
 
 func BenchmarkAllocations(b *testing.B) {
-	x := New()
+	x := New(newConfig())
 	x.Add("stays")
 	b.ResetTimer()
 	allocSize := allocBytes(func() {
@@ -553,7 +558,7 @@ func BenchmarkAllocations(b *testing.B) {
 }
 
 func BenchmarkMalloc(b *testing.B) {
-	x := New()
+	x := New(newConfig())
 	x.Add("stays")
 	b.ResetTimer()
 	mallocs := mallocNum(func() {
@@ -566,7 +571,7 @@ func BenchmarkMalloc(b *testing.B) {
 }
 
 func BenchmarkCycle(b *testing.B) {
-	x := New()
+	x := New(newConfig())
 	x.Add("nothing")
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -576,7 +581,7 @@ func BenchmarkCycle(b *testing.B) {
 }
 
 func BenchmarkCycleLarge(b *testing.B) {
-	x := New()
+	x := New(newConfig())
 	for i := 0; i < 10; i++ {
 		x.Add("start" + strconv.Itoa(i))
 	}
@@ -588,7 +593,7 @@ func BenchmarkCycleLarge(b *testing.B) {
 }
 
 func BenchmarkGet(b *testing.B) {
-	x := New()
+	x := New(newConfig())
 	x.Add("nothing")
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -597,7 +602,7 @@ func BenchmarkGet(b *testing.B) {
 }
 
 func BenchmarkGetLarge(b *testing.B) {
-	x := New()
+	x := New(newConfig())
 	for i := 0; i < 10; i++ {
 		x.Add("start" + strconv.Itoa(i))
 	}
@@ -608,7 +613,7 @@ func BenchmarkGetLarge(b *testing.B) {
 }
 
 func BenchmarkGetN(b *testing.B) {
-	x := New()
+	x := New(newConfig())
 	x.Add("nothing")
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -617,7 +622,7 @@ func BenchmarkGetN(b *testing.B) {
 }
 
 func BenchmarkGetNLarge(b *testing.B) {
-	x := New()
+	x := New(newConfig())
 	for i := 0; i < 10; i++ {
 		x.Add("start" + strconv.Itoa(i))
 	}
@@ -628,7 +633,7 @@ func BenchmarkGetNLarge(b *testing.B) {
 }
 
 func BenchmarkGetTwo(b *testing.B) {
-	x := New()
+	x := New(newConfig())
 	x.Add("nothing")
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -637,7 +642,7 @@ func BenchmarkGetTwo(b *testing.B) {
 }
 
 func BenchmarkGetTwoLarge(b *testing.B) {
-	x := New()
+	x := New(newConfig())
 	for i := 0; i < 10; i++ {
 		x.Add("start" + strconv.Itoa(i))
 	}
@@ -653,7 +658,7 @@ func TestAddCollision(t *testing.T) {
 	// appended added by Consistent.eltKey.
 	const s1 = "abear"
 	const s2 = "solidiform"
-	x := New()
+	x := New(newConfig())
 	x.Add(s1)
 	x.Add(s2)
 	elt1, err := x.Get("abear")
@@ -661,7 +666,7 @@ func TestAddCollision(t *testing.T) {
 		t.Fatal("unexpected error:", err)
 	}
 
-	y := New()
+	y := New(newConfig())
 	// add elements in opposite order
 	y.Add(s2)
 	y.Add(s1)
@@ -678,7 +683,7 @@ func TestAddCollision(t *testing.T) {
 // inspired by @or-else on github
 func TestCollisionsCRC(t *testing.T) {
 	t.SkipNow()
-	c := New()
+	c := New(newConfig())
 	f, err := os.Open("/usr/share/dict/words")
 	if err != nil {
 		t.Fatal(err)
@@ -706,7 +711,7 @@ func TestCollisionsCRC(t *testing.T) {
 }
 
 func TestConcurrentGetSet(t *testing.T) {
-	x := New()
+	x := New(newConfig())
 	x.Set([]string{"abc", "def", "ghi", "jkl", "mno"})
 
 	var wg sync.WaitGroup
@@ -743,7 +748,7 @@ func TestConcurrentGetSet(t *testing.T) {
 }
 
 func TestDistributionFnv(t *testing.T) {
-	x := New()
+	x := New(newConfig())
 	x.UseFnv = true
 	x.Add("abcdefg")
 	x.Add("hijklmn")
@@ -768,7 +773,7 @@ func TestDistributionFnv(t *testing.T) {
 }
 
 func TestDistributionCRC(t *testing.T) {
-	x := New()
+	x := New(newConfig())
 	x.Add("abcdefg")
 	x.Add("hijklmn")
 	x.Add("opqrstu")
