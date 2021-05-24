@@ -56,7 +56,7 @@ type Consistent struct {
 	sync.RWMutex
 }
 type Config struct {
-	NumberOfReplicas int
+	NumberOfReplicas int // default NumberOfReplicas
 	UseFnv           bool
 	Hasher           Hasher
 }
@@ -90,6 +90,9 @@ func (c *Consistent) eltKey(elt string, idx int) string {
 func (c *Consistent) Add(elt string) {
 	c.Lock()
 	defer c.Unlock()
+	if _, ok := c.members[elt]; ok {
+		return
+	}
 	c.add(elt)
 }
 
@@ -107,6 +110,9 @@ func (c *Consistent) add(elt string) {
 func (c *Consistent) Remove(elt string) {
 	c.Lock()
 	defer c.Unlock()
+	if _, ok := c.members[elt]; !ok {
+		return
+	}
 	c.remove(elt)
 }
 
