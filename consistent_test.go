@@ -26,7 +26,7 @@ func checkNum(num, expected int, t *testing.T) {
 
 func newConfig() Config {
 	return Config{
-		NumberOfReplicas: 20,
+		defaultNumberOfReplicas: 20,
 	}
 }
 func TestNew(t *testing.T) {
@@ -34,7 +34,7 @@ func TestNew(t *testing.T) {
 	if x == nil {
 		t.Errorf("expected obj")
 	}
-	checkNum(x.NumberOfReplicas, 20, t)
+	checkNum(x.defaultNumberOfReplicas, 20, t)
 }
 
 func TestAdd(t *testing.T) {
@@ -466,7 +466,64 @@ func TestGetNMoreQuick(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+func TestSetWithReplicas(t *testing.T) {
+	x := New(newConfig())
+	x.Add("abc", 20)
+	x.Add("def", 40)
+	x.Add("ghi", 80)
+	x.SetWithReplicas([]SetElt{{"jkl", 40}, {"mno", 60}})
+	if x.count != 2 {
+		t.Errorf("expected 2 elts, got %d", x.count)
+	}
+	a, b, err := x.GetTwo("qwerqwerwqer")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if a != "jkl" && a != "mno" {
+		t.Errorf("expected jkl or mno, got %s", a)
+	}
+	if b != "jkl" && b != "mno" {
+		t.Errorf("expected jkl or mno, got %s", b)
+	}
+	if a == b {
+		t.Errorf("expected a != b, they were both %s", a)
+	}
+	x.SetWithReplicas([]SetElt{{"pqr", 110}, {"mno", 23}})
+	if x.count != 2 {
+		t.Errorf("expected 2 elts, got %d", x.count)
+	}
+	a, b, err = x.GetTwo("qwerqwerwqer")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if a != "pqr" && a != "mno" {
+		t.Errorf("expected jkl or mno, got %s", a)
+	}
+	if b != "pqr" && b != "mno" {
+		t.Errorf("expected jkl or mno, got %s", b)
+	}
+	if a == b {
+		t.Errorf("expected a != b, they were both %s", a)
+	}
+	x.SetWithReplicas([]SetElt{{"pqr", 80}, {"mno", 90}})
 
+	if x.count != 2 {
+		t.Errorf("expected 2 elts, got %d", x.count)
+	}
+	a, b, err = x.GetTwo("qwerqwerwqer")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if a != "pqr" && a != "mno" {
+		t.Errorf("expected jkl or mno, got %s", a)
+	}
+	if b != "pqr" && b != "mno" {
+		t.Errorf("expected jkl or mno, got %s", b)
+	}
+	if a == b {
+		t.Errorf("expected a != b, they were both %s", a)
+	}
+}
 func TestSet(t *testing.T) {
 	x := New(newConfig())
 	x.Add("abc")
@@ -694,7 +751,7 @@ func TestCollisionsCRC(t *testing.T) {
 	count := 0
 	for scanner.Scan() {
 		word := scanner.Text()
-		for i := 0; i < c.NumberOfReplicas; i++ {
+		for i := 0; i < c.defaultNumberOfReplicas; i++ {
 			ekey := c.eltKey(word, i)
 			// ekey := word + "|" + strconv.Itoa(i)
 			k := c.hashKey(ekey)
@@ -749,7 +806,7 @@ func TestConcurrentGetSet(t *testing.T) {
 
 func TestDistributionFnv(t *testing.T) {
 	x := New(newConfig())
-	x.UseFnv = true
+	x.useFnv = true
 	x.Add("abcdefg")
 	x.Add("hijklmn")
 	x.Add("opqrstu")
@@ -793,5 +850,21 @@ func TestDistributionCRC(t *testing.T) {
 	}
 	for k, v := range dist {
 		t.Logf("%s: %d", k, v)
+	}
+}
+
+func TestNumberOfReplicas(t *testing.T) {
+	x := New(newConfig())
+	x.Add("abcdefg")
+	x.Add("hijklmn")
+	x.Add("opqrstu")
+
+	x.Remove("abcdefg")
+	x.Remove("hijklmn")
+	x.Remove("opqrstu")
+
+	_, err := x.Get("abcifjidsjafjdsf")
+	if err != ErrEmptyCircle {
+		t.Fatalf("expect err empty circle")
 	}
 }
