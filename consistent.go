@@ -45,20 +45,21 @@ var ErrEmptyCircle = errors.New("empty circle")
 
 // Consistent holds the information about the members of the consistent hash circle.
 type Consistent struct {
-	circle           map[uint32]string
-	members          map[string]bool
-	sortedHashes     uints
-	NumberOfReplicas int
-	count            int64
-	scratch          [64]byte
-	UseFnv           bool
-	Hasher           Hasher
+	circle                  map[uint32]string // key: [hash(i+elt)], the number of specific elt(number of i) depends on NumberOfReplicas
+	members                 map[string]bool
+	membersReplicas         map[string]int
+	sortedHashes            uints //key of circle store here, for quick sort
+	defaultNumberOfReplicas int
+	count                   int64
+	scratch                 [64]byte
+	customHasher            Hasher
+	useFnv                  bool
 	sync.RWMutex
 }
 type Config struct {
-	NumberOfReplicas int // default NumberOfReplicas
-	UseFnv           bool
-	Hasher           Hasher
+	defaultNumberOfReplicas int
+	useFnv                  bool
+	customHasher            Hasher
 }
 type Hasher interface {
 	HashFunc(key string) uint32
@@ -69,14 +70,15 @@ type Hasher interface {
 // To change the number of replicas, set NumberOfReplicas before adding entries.
 func New(conf Config) *Consistent {
 	c := new(Consistent)
-	c.NumberOfReplicas = conf.NumberOfReplicas
-	if c.NumberOfReplicas == 0 {
-		c.NumberOfReplicas = 20
+	c.defaultNumberOfReplicas = conf.defaultNumberOfReplicas
+	if c.defaultNumberOfReplicas == 0 {
+		c.defaultNumberOfReplicas = 43
 	}
-	c.UseFnv = conf.UseFnv
-	c.Hasher = conf.Hasher
+	c.useFnv = conf.useFnv
+	c.customHasher = conf.customHasher
 	c.circle = make(map[uint32]string)
 	c.members = make(map[string]bool)
+	c.membersReplicas = make(map[string]int)
 	return c
 }
 
@@ -87,47 +89,61 @@ func (c *Consistent) eltKey(elt string, idx int) string {
 }
 
 // Add inserts a string element in the consistent hash.
-func (c *Consistent) Add(elt string) {
+func (c *Consistent) Add(elt string, numbersOfReplicas ...int) {
 	c.Lock()
 	defer c.Unlock()
 	if _, ok := c.members[elt]; ok {
 		return
 	}
-	c.add(elt)
+	numberOfReplicas := c.defaultNumberOfReplicas
+	if len(numbersOfReplicas) > 0 {
+		numberOfReplicas = numbersOfReplicas[0]
+	}
+	c.add(elt, numberOfReplicas)
 }
 
 // need c.Lock() before calling
-func (c *Consistent) add(elt string) {
-	for i := 0; i < c.NumberOfReplicas; i++ {
+func (c *Consistent) add(elt string, numberOfReplicas int) {
+	for i := 0; i < numberOfReplicas; i++ {
 		c.circle[c.hashKey(c.eltKey(elt, i))] = elt
 	}
 	c.members[elt] = true
+	c.membersReplicas[elt] = numberOfReplicas
 	c.updateSortedHashes()
 	c.count++
 }
 
 // Remove removes an element from the hash.
-func (c *Consistent) Remove(elt string) {
+// return true for Remove success, false for Remove does not work
+func (c *Consistent) Remove(elt string) bool {
 	c.Lock()
 	defer c.Unlock()
 	if _, ok := c.members[elt]; !ok {
-		return
+		return false
 	}
-	c.remove(elt)
+	numberOfReplicas, ok := c.membersReplicas[elt]
+	if !ok {
+		return false
+	}
+	c.remove(elt, numberOfReplicas)
+	return true
 }
 
 // need c.Lock() before calling
-func (c *Consistent) remove(elt string) {
-	for i := 0; i < c.NumberOfReplicas; i++ {
+func (c *Consistent) remove(elt string, numberOfReplicas int) {
+	for i := 0; i < numberOfReplicas; i++ {
 		delete(c.circle, c.hashKey(c.eltKey(elt, i)))
 	}
 	delete(c.members, elt)
+	delete(c.membersReplicas, elt)
 	c.updateSortedHashes()
 	c.count--
+	return
 }
 
 // Set sets all the elements in the hash.  If there are existing elements not
 // present in elts, they will be removed.
+// defaultNumberOfReplicas will be used to add member
 func (c *Consistent) Set(elts []string) {
 	c.Lock()
 	defer c.Unlock()
@@ -140,7 +156,9 @@ func (c *Consistent) Set(elts []string) {
 			}
 		}
 		if !found {
-			c.remove(k)
+			if v, ok := c.membersReplicas[k]; ok {
+				c.remove(k, v)
+			}
 		}
 	}
 	for _, v := range elts {
@@ -148,7 +166,43 @@ func (c *Consistent) Set(elts []string) {
 		if exists {
 			continue
 		}
-		c.add(v)
+		c.add(v, c.defaultNumberOfReplicas)
+	}
+}
+
+type SetElt struct {
+	Elt              string
+	NumberOfReplicas int
+}
+
+// SetWithReplicas sets all the elements in the hash with NumberOfReplicas.  If there are existing elements not
+// present in elts, they will be removed.
+func (c *Consistent) SetWithReplicas(elts []SetElt) {
+	c.Lock()
+	defer c.Unlock()
+	for k := range c.members {
+		found := false
+		for _, v := range elts {
+			if k == v.Elt {
+				found = true
+				break
+			}
+		}
+		if !found {
+			if v, ok := c.membersReplicas[k]; ok {
+				c.remove(k, v)
+			}
+		}
+	}
+	for _, v := range elts {
+		_, exists := c.members[v.Elt]
+		if exists {
+			continue
+		}
+		if v.NumberOfReplicas == 0 {
+			v.NumberOfReplicas = c.defaultNumberOfReplicas
+		}
+		c.add(v.Elt, v.NumberOfReplicas)
 	}
 }
 
@@ -258,10 +312,10 @@ func (c *Consistent) GetN(name string, n int) ([]string, error) {
 }
 
 func (c *Consistent) hashKey(key string) uint32 {
-	if c.Hasher != nil {
-		return c.Hasher.HashFunc(key)
+	if c.customHasher != nil {
+		return c.customHasher.HashFunc(key)
 	}
-	if c.UseFnv {
+	if c.useFnv {
 		return c.hashKeyFnv(key)
 	}
 	return c.hashKeyCRC32(key)
@@ -285,7 +339,7 @@ func (c *Consistent) hashKeyFnv(key string) uint32 {
 func (c *Consistent) updateSortedHashes() {
 	hashes := c.sortedHashes[:0]
 	//reallocate if we're holding on to too much (1/4th)
-	if cap(c.sortedHashes)/(c.NumberOfReplicas*4) > len(c.circle) {
+	if cap(c.sortedHashes)/(c.defaultNumberOfReplicas*4) > len(c.circle) {
 		hashes = nil
 	}
 	for k := range c.circle {
