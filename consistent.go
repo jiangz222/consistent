@@ -57,9 +57,9 @@ type Consistent struct {
 	sync.RWMutex
 }
 type Config struct {
-	defaultNumberOfReplicas int
-	useFnv                  bool
-	customHasher            Hasher
+	DefaultNumberOfReplicas int
+	UseFnv                  bool
+	CustomHasher            Hasher
 }
 type Hasher interface {
 	HashFunc(key string) uint32
@@ -70,12 +70,12 @@ type Hasher interface {
 // To change the number of replicas, set NumberOfReplicas before adding entries.
 func New(conf Config) *Consistent {
 	c := new(Consistent)
-	c.defaultNumberOfReplicas = conf.defaultNumberOfReplicas
+	c.defaultNumberOfReplicas = conf.DefaultNumberOfReplicas
 	if c.defaultNumberOfReplicas == 0 {
 		c.defaultNumberOfReplicas = 43
 	}
-	c.useFnv = conf.useFnv
-	c.customHasher = conf.customHasher
+	c.useFnv = conf.UseFnv
+	c.customHasher = conf.CustomHasher
 	c.circle = make(map[uint32]string)
 	c.members = make(map[string]bool)
 	c.membersReplicas = make(map[string]int)

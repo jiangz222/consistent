@@ -26,7 +26,7 @@ func checkNum(num, expected int, t *testing.T) {
 
 func newConfig() Config {
 	return Config{
-		defaultNumberOfReplicas: 20,
+		DefaultNumberOfReplicas: 20,
 	}
 }
 func TestNew(t *testing.T) {
