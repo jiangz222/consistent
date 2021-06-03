@@ -35,7 +35,7 @@ Changes in [jiangz222/consistent](https://github.com/jiangz222/consistent)
 -----
 - Support custom hash function in Config to New instance
 - Support default number of replicas in Config to New instance
-- Support number of replicas for every single member
+- Support number of replicas for every single member(both in Add and Remove)
 - Add function: SetWithReplicas(),MemberReplicas()
 
  
