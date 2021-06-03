@@ -30,3 +30,12 @@ About
 -----
 
 Written by Patrick Crosby at [StatHat](http://www.stathat.com).  Twitter:  [@stathat](http://twitter.com/stathat)
+
+Changes in [jiangz222/consistent](https://github.com/jiangz222/consistent)
+-----
+- Support custom hash function in Config to New instance
+- Support default number of replicas in Config to New instance
+- Support number of replicas for every single member
+- Add function: SetWithReplicas(),MemberReplicas()
+
+ 
