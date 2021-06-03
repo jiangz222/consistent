@@ -215,6 +215,15 @@ func (c *Consistent) Members() []string {
 	}
 	return m
 }
+func (c *Consistent) MemberReplicas() map[string]int {
+	c.RLock()
+	defer c.RUnlock()
+	m := make(map[string]int, len(c.membersReplicas))
+	for k, v := range c.membersReplicas {
+		m[k] = v
+	}
+	return m
+}
 
 // Get returns an element close to where name hashes to in the circle.
 func (c *Consistent) Get(name string) (string, error) {
