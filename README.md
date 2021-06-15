@@ -39,7 +39,7 @@ Changes in [jiangz222/consistent](https://github.com/jiangz222/consistent)
 ```go
 	x := New(newConfig())
 	x.Add("def", 40)
-    
+	x.Remove("def")
 ```
 - Add function: SetWithReplicas(),MemberReplicas()
 
